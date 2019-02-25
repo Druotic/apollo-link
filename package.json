@@ -1,75 +1,58 @@
 {
-  "private": true,
-  "license": "MIT",
-  "scripts": {
-    "bootstrap": "lerna exec -- npm install && lerna run prepare && lerna link",
-    "diff": "check-if-folder-contents-changed-in-git-commit-range",
-    "postinstall": "npm run bootstrap",
-    "postbootstrap": "npm run build",
-    "build": "lerna run build",
-    "test": "lerna run test",
-    "prelint": "npm run lint-fix",
-    "lint": "lerna run lint",
-    "lint-fix": "prettier --trailing-comma all --single-quote --write \"packages/*/{src,tests,test,benchmark}/**/*.{j,t}s*\"",
-    "lint-staged": "lint-staged",
-    "lint-check": "prettier-check --single-quote --trailing-comma all \"packages/*/{src,__tests__}/**/*.ts\"",
-    "filesize": "lerna run filesize && bundlesize",
-    "type-check": "lerna run type-check",
-    "coverage": "jest --verbose --coverage",
-    "coverage:upload": "codecov",
-    "danger": "danger run --verbose",
-    "predeploy": "npm run bootstrap",
-    "test-ci": "npm run coverage -- --ci --maxWorkers=2 --reporters=default --reporters=jest-junit",
-    "deploy": "lerna publish -m \"chore: Publish\"",
-    "watch": "trap \"kill 0\" SIGINT; for f in `ls packages`; do (cd `pwd`/packages/$f && [[ -e package.json ]] && npm run watch) & done; "
-  },
-  "bundlesize": [
-    {
-      "name": "apollo-link",
-      "path": "./packages/apollo-link/lib/bundle.min.js",
-      "maxSize": "3 Kb"
-    },
-    {
-      "name": "apollo-link-batch",
-      "path": "./packages/apollo-link-batch/lib/bundle.min.js",
-      "maxSize": "1.5 Kb"
-    },
-    {
-      "name": "apollo-link-batch-http",
-      "path": "./packages/apollo-link-batch-http/lib/bundle.min.js",
-      "maxSize": "6.8 Kb"
-    },
-    {
-      "name": "apollo-link-dedup",
-      "path": "./packages/apollo-link-dedup/lib/bundle.min.js",
-      "maxSize": "3 Kb"
-    },
-    {
-      "name": "apollo-link-error",
-      "path": "./packages/apollo-link-error/lib/bundle.min.js",
-      "maxSize": "1 Kb"
-    },
-    {
-      "name": "apollo-link-http",
-      "path": "./packages/apollo-link-http/lib/bundle.min.js",
-      "maxSize": "6 Kb"
-    },
-    {
-      "name": "apollo-link-polling",
-      "path": "./packages/apollo-link-polling/lib/bundle.min.js",
-      "maxSize": "1 Kb"
-    },
-    {
-      "name": "apollo-link-retry",
-      "path": "./packages/apollo-link-retry/lib/bundle.min.js",
-      "maxSize": "2.5 Kb"
-    },
-    {
-      "name": "apollo-link-ws",
-      "path": "./packages/apollo-link-ws/lib/bundle.min.js",
-      "maxSize": "10 Kb"
-    }
+  "name": "apollo-link-dedup",
+  "version": "1.0.15",
+  "description": "Deduplicates queries that are currently on the wire",
+  "author": "Evans Hauser <evanshauser@gmail.com>",
+  "contributors": [
+    "James Baxley <james@meteor.com>",
+    "Jonas Helfer <jonas@helfer.email>",
+    "jon wong <j@jnwng.com>",
+    "Sashko Stubailo <sashko@stubailo.com>"
   ],
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "module": "./lib/bundle.esm.js",
+  "typings": "./lib/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-link.git"
+  },
+  "bugs": {
+    "url": "https://github.com/apollographql/apollo-link/issues"
+  },
+  "homepage": "https://github.com/apollographql/apollo-link#readme",
+  "scripts": {
+    "build:browser": "browserify ./lib/bundle.umd.js -o=./lib/bundle.js --i apollo-link && npm run minify:browser",
+    "build": "tsc -p ./tsconfig.cjs.json",
+    "bundle": "rollup -c",
+    "clean": "rimraf lib/* && rimraf coverage/*",
+    "coverage": "jest --coverage",
+    "filesize": "npm run build && npm run build:browser",
+    "lint": "tslint -c \"../../tslint.json\" -p tsconfig.json -c ../../tslint.json src/*.ts",
+    "minify:browser": "uglifyjs -c -m -o ./lib/bundle.min.js -- ./lib/bundle.js",
+    "postbuild": "npm run bundle",
+    "prebuild": "npm run clean",
+    "prepublishOnly": "npm run clean && npm run build",
+    "test": "jest",
+    "watch": "tsc -w -p . & rollup -c -w"
+  },
+  "dependencies": {
+    "apollo-link": "^1.2.8"
+  },
+  "devDependencies": {
+    "@types/graphql": "14.0.7",
+    "@types/jest": "22.2.3",
+    "browserify": "16.2.3",
+    "graphql": "14.1.1",
+    "graphql-tag": "2.10.1",
+    "jest": "22.4.4",
+    "rimraf": "2.6.3",
+    "rollup": "0.68.2",
+    "ts-jest": "22.4.6",
+    "tslint": "5.12.1",
+    "typescript": "3.0.3",
+    "uglify-js": "3.4.9"
+  },
   "jest": {
     "transform": {
       ".(ts|tsx)": "ts-jest"
@@ -81,45 +64,6 @@
       "js",
       "json"
     ],
-    "testURL": "http://localhost",
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "sharedHttpTests.ts"
-    ]
-  },
-  "lint-staged": {
-    "*.{ts, tsx, js, jsx}": [
-      "prettier --trailing-comma all --single-quote --write",
-      "git add"
-    ],
-    "!(package).json": [
-      "prettier --write",
-      "git add"
-    ]
-  },
-  "pre-commit": "lint-staged",
-  "pre-push": "lint-check",
-  "dependencies": {},
-  "devDependencies": {
-    "@types/zen-observable": "0.8.0",
-    "bundlesize": "0.17.1",
-    "check-if-folder-contents-changed-in-git-commit-range": "1.0.0",
-    "codecov": "3.2.0",
-    "danger": "3.9.0",
-    "jest": "^24.0.0",
-    "jest-junit": "6.3.0",
-    "lerna": "3.13.0",
-    "lint-staged": "7.3.0",
-    "pre-commit": "1.2.2",
-    "pre-push": "0.1.1",
-    "prettier": "1.15.2",
-    "prettier-check": "2.0.0",
-    "rollup": "0.68.2",
-    "rollup-plugin-node-resolve": "3.4.0",
-    "rollup-plugin-sourcemaps": "0.4.2",
-    "rollup-plugin-typescript2": "0.19.2",
-    "ts-jest": "22.4.6",
-    "tslib": "1.9.3",
-    "typescript": "3.0.3"
+    "testURL": "http://localhost"
   }
 }
